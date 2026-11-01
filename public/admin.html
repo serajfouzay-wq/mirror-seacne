@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photo Wall — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body class="admin">
+  <!-- login -->
+  <div class="login hidden" id="login">
+    <form class="card" id="loginForm">
+      <h1>Photo Wall Admin</h1>
+      <label class="field"><span>Admin key</span><input type="password" id="keyInput" required autofocus /></label>
+      <p class="error hidden" id="loginError">Wrong key</p>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+  </div>
+
+  <div class="app hidden" id="app">
+    <header class="topbar">
+      <div class="brand">📸 Photo Wall</div>
+      <label class="event-pick">Event
+        <input id="eventInput" list="eventList" maxlength="40" />
+        <datalist id="eventList"></datalist>
+      </label>
+      <span class="conn-pill" id="connPill">offline</span>
+      <div class="spacer"></div>
+      <a class="btn ghost sm" id="openScreen" target="_blank" rel="noopener">Open screen ↗</a>
+      <a class="btn ghost sm" id="openGuest" target="_blank" rel="noopener">Guest page ↗</a>
+      <button class="btn ghost sm" id="logout" type="button">Sign out</button>
+    </header>
+
+    <main class="admin-grid">
+      <!-- ============ SCREEN CONTROL ============ -->
+      <section class="card">
+        <h2>Big screen</h2>
+        <div class="mode-row" id="modeRow">
+          <button class="mode-btn" data-mode="wall" type="button"><b>▦</b>Wall</button>
+          <button class="mode-btn" data-mode="scatter" type="button"><b>✦</b>Scatter</button>
+          <button class="mode-btn" data-mode="shape" type="button"><b>♥</b>Shape</button>
+        </div>
+        <p class="muted small" id="modeInfo"></p>
+
+        <h3>Build a shape</h3>
+        <div class="tabs" id="shapeTabs">
+          <button data-type="text" type="button">Text / Name / Number</button>
+          <button data-type="preset" type="button">Shapes</button>
+          <button data-type="image" type="button">Logo / Image</button>
+        </div>
+
+        <div class="tab-body" data-for="text">
+          <label class="field"><span>Text (use <code>|</code> for a new line)</span>
+            <input id="shapeText" maxlength="60" placeholder="A · SARA · 2026 · سارة" />
+          </label>
+          <label class="field"><span>Font</span><select id="shapeFont"></select></label>
+        </div>
+        <div class="tab-body" data-for="preset">
+          <div class="preset-grid" id="presetGrid"></div>
+        </div>
+        <div class="tab-body" data-for="image">
+          <label class="field"><span>Upload a logo / silhouette (dark or opaque parts become the shape)</span>
+            <input type="file" accept="image/*" id="shapeImage" />
+          </label>
+          <label class="check"><input type="checkbox" id="shapeInvert" /><span>Invert</span></label>
+        </div>
+
+        <div class="sliders">
+          <label class="field"><span>Detail — min tiles: <b id="detailVal"></b></span>
+            <input type="range" id="detail" min="40" max="1500" step="10" /></label>
+          <label class="field"><span>Gap between photos: <b id="gapVal"></b>px</span>
+            <input type="range" id="gap" min="0" max="10" step="1" /></label>
+          <label class="check"><input type="checkbox" id="repeat" /><span>Repeat photos to fill the shape</span></label>
+        </div>
+
+        <div class="preview-wrap">
+          <canvas id="preview" width="640" height="360"></canvas>
+          <div class="preview-info" id="previewInfo"></div>
+        </div>
+
+        <button class="btn primary big" id="formShape" type="button">✨ Form this shape on the screen</button>
+        <div class="chips" id="recentShapes"></div>
+      </section>
+
+      <!-- ============ PHOTOS ============ -->
+      <section class="card photos-card">
+        <div class="row between">
+          <h2>Photos</h2>
+          <div class="row">
+            <button class="btn sm" id="approveAll" type="button">Approve all pending</button>
+          </div>
+        </div>
+        <div class="tabs filter" id="filterTabs">
+          <button data-f="pending" type="button">Pending <span class="count" id="cPending">0</span></button>
+          <button data-f="approved" type="button">On screen <span class="count" id="cApproved">0</span></button>
+          <button data-f="hidden" type="button">Hidden <span class="count" id="cHidden">0</span></button>
+          <button data-f="all" type="button">All <span class="count" id="cAll">0</span></button>
+        </div>
+        <div class="photo-grid" id="photoGrid"></div>
+        <p class="muted center hidden" id="noPhotos">No photos here yet.</p>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="card">
+        <h2>Settings</h2>
+        <label class="check"><input type="checkbox" id="autoApprove" /><span>Auto-approve new photos (skip moderation)</span></label>
+        <label class="check"><input type="checkbox" id="spotlight" /><span>Pop new photos up big before they join</span></label>
+        <label class="check"><input type="checkbox" id="showQr" /><span>Show QR code on the screen</span></label>
+        <label class="field"><span>Screen caption</span><input id="caption" maxlength="140" /></label>
+        <label class="field"><span>QR link (leave empty = this guest page; or your RSVP / registration URL)</span>
+          <input id="qrUrl" placeholder="https://rsvp.example.com/register?event=..." /></label>
+        <label class="field color"><span>Background</span><input type="color" id="background" /></label>
+        <button class="btn" id="saveSettings" type="button">Save settings</button>
+        <span class="muted small" id="savedMsg"></span>
+
+        <h3>Share</h3>
+        <div class="share">
+          <img id="guestQr" alt="Guest QR" />
+          <div>
+            <p class="small">Guest link</p>
+            <code class="copy" id="guestLink"></code>
+            <p class="small">Screen link</p>
+            <code class="copy" id="screenLink"></code>
+            <p class="muted small">Click a link to copy it.</p>
+          </div>
+        </div>
+
+        <h3>Danger zone</h3>
+        <button class="btn danger" id="clearEvent" type="button">Delete all photos of this event</button>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="vendor/socket.io.min.js"></script>
+  <script src="static/js/common.js"></script>
+  <script src="static/js/shapes.js"></script>
+  <script src="static/js/admin.js"></script>
+</body>
+</html>

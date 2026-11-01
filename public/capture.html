@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b14" />
+  <title>Join the Photo Wall</title>
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body class="guest">
+  <main class="guest-card">
+    <button class="lang-toggle" id="langToggle" type="button">ع</button>
+
+    <!-- Step 1: name -->
+    <section class="step" id="stepName">
+      <div class="badge-icon" aria-hidden="true">📸</div>
+      <h1 id="title" data-i18n="title">Join the photo wall</h1>
+      <p class="muted" data-i18n="intro">Take a quick selfie — it will appear on the big screen and become part of a giant picture made of everyone here.</p>
+      <form id="nameForm" autocomplete="on">
+        <label class="field">
+          <span data-i18n="nameLabel">Your name</span>
+          <input id="name" name="name" maxlength="60" required autocomplete="name" data-i18n-ph="namePh" placeholder="e.g. Sara" />
+        </label>
+        <label class="check">
+          <input type="checkbox" id="consent" required />
+          <span data-i18n="consent">I agree my photo is shown on the event screen.</span>
+        </label>
+        <button class="btn primary big" type="submit" data-i18n="openCamera">Open camera</button>
+      </form>
+    </section>
+
+    <!-- Step 2: camera -->
+    <section class="step hidden" id="stepCamera">
+      <div class="frame">
+        <video id="video" playsinline autoplay muted></video>
+        <div class="frame-guide" aria-hidden="true"></div>
+        <div class="countdown hidden" id="countdown">3</div>
+      </div>
+      <p class="error hidden" id="camError"></p>
+      <div class="cam-controls">
+        <label class="btn ghost round" title="Gallery">
+          <input type="file" accept="image/*" id="fileInput" hidden />
+          <span aria-hidden="true">🖼️</span>
+        </label>
+        <button class="shutter" id="shutter" type="button" aria-label="Take photo"></button>
+        <button class="btn ghost round" id="switchCam" type="button" title="Switch camera" aria-label="Switch camera">🔄</button>
+      </div>
+      <p class="muted small center" data-i18n="camHint">Centre your face in the frame</p>
+    </section>
+
+    <!-- Step 3: review -->
+    <section class="step hidden" id="stepReview">
+      <div class="frame"><img id="preview" alt="Your photo" /></div>
+      <div class="row">
+        <button class="btn ghost" id="retake" type="button" data-i18n="retake">Retake</button>
+        <button class="btn primary" id="send" type="button" data-i18n="send">Send to the wall</button>
+      </div>
+    </section>
+
+    <!-- Step 4: done -->
+    <section class="step hidden" id="stepDone">
+      <div class="spinner" id="spinner"></div>
+      <div id="doneBox" class="hidden">
+        <div class="badge-icon" aria-hidden="true">🎉</div>
+        <h1 data-i18n="doneTitle">You're in!</h1>
+        <p class="muted" id="doneText" data-i18n="doneText">Look at the big screen — your photo is joining the wall.</p>
+        <button class="btn ghost" id="again" type="button" data-i18n="again">Take another photo</button>
+      </div>
+      <p class="error hidden" id="sendError"></p>
+    </section>
+  </main>
+
+  <canvas id="work" hidden></canvas>
+  <script src="static/js/common.js"></script>
+  <script src="static/js/capture.js"></script>
+</body>
+</html>

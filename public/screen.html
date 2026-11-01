@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photo Wall — Screen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="static/css/style.css" />
+</head>
+<body class="screen">
+  <canvas id="stage"></canvas>
+
+  <div class="empty-state hidden" id="emptyState">
+    <h1 id="emptyTitle">Take a selfie &amp; join the wall</h1>
+    <img class="qr-big" id="qrBig" alt="Scan to join" />
+    <p id="emptyCaption"></p>
+  </div>
+
+  <div class="spotlight hidden" id="spotlight">
+    <img id="spotImg" alt="" />
+    <div class="spot-name" id="spotName"></div>
+  </div>
+
+  <div class="qr-box hidden" id="qrBox">
+    <img id="qrImg" alt="Scan to join" />
+    <span id="qrCaption"></span>
+  </div>
+
+  <div class="counter" id="counter"></div>
+  <div class="conn" id="conn" title="connection"></div>
+  <button class="fs-btn" id="fsBtn" type="button" title="Fullscreen (F)">⛶</button>
+
+  <script src="vendor/socket.io.min.js"></script>
+  <script src="static/js/common.js"></script>
+  <script src="static/js/shapes.js"></script>
+  <script src="static/js/screen.js"></script>
+</body>
+</html>
