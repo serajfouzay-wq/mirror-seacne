@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0b16">
+<title>Selfie Mosaic Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Cairo:wght@600;900&family=Lilita+One&family=Tajawal:wght@900&family=Sora:wght@400;600;700&display=swap">
+<style>
+/* Layout: event-screen mock on top, a compact control deck below; one dark "venue" look by choice. */
+:root {
+  --ink: #0d0b16;
+  --deck: #17142a;
+  --deck-2: #221e3b;
+  --line: #342f57;
+  --text: #f4f1ff;
+  --muted: #a8a2c8;
+  --magenta: #ff4f9a;
+  --violet: #8a6bff;
+  --gold: #ffc65c;
+  --font-display: "Anton", Impact, "Arial Narrow", sans-serif;
+  --font-body: "Sora", "Cairo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--ink); color: var(--text); margin: 0; }
+img { max-width: 100%; }
+body {
+  font: 15px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 40px;
+}
+html[dir="rtl"] body { font-family: "Cairo", var(--font-body); }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+
+header.top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.brand h1 {
+  font-family: var(--font-display); font-weight: 400; letter-spacing: 0.02em;
+  font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1; margin: 0; text-wrap: balance;
+}
+html[dir="rtl"] .brand h1 { font-family: "Cairo", var(--font-display); font-weight: 900; }
+.brand p { margin: 4px 0 0; color: var(--muted); font-size: 0.92rem; }
+.tag {
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent); padding: 3px 9px; border-radius: 999px;
+}
+.lang {
+  background: var(--deck-2); color: var(--text); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px 12px; font: inherit; cursor: pointer;
+}
+
+/* ---------- the big screen ---------- */
+.stage {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 120%, #2a1650 0%, transparent 60%), #0a0812;
+  box-shadow: 0 0 0 1px var(--line), 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.stage:fullscreen { border-radius: 0; aspect-ratio: auto; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.stage .count {
+  position: absolute; top: 3%; inset-inline-start: 2.5%; font-weight: 700; font-size: clamp(0.75rem, 1.6vw, 1.1rem);
+  text-shadow: 0 2px 8px #000; opacity: 0.9; font-variant-numeric: tabular-nums;
+}
+.stage .fs {
+  position: absolute; top: 2.5%; inset-inline-end: 2%; background: rgba(0, 0, 0, 0.45); color: #fff; border: 0;
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 0.8rem;
+}
+.spot {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none; gap: 3%;
+}
+.spot img {
+  width: 42%; max-width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 7%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 5px #fff;
+  animation: spotIn 0.7s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.spot b {
+  font-size: clamp(1rem, 3.4vw, 2.4rem); background: rgba(0, 0, 0, 0.5); padding: 0.1em 0.8em; border-radius: 999px;
+  animation: spotIn 0.7s 0.12s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.spot b:empty { display: none; }
+@keyframes spotIn { from { transform: scale(0.2) rotate(-8deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.hint {
+  position: absolute; bottom: 4%; left: 50%; transform: translateX(-50%); background: rgba(0, 0, 0, 0.55);
+  padding: 6px 14px; border-radius: 999px; font-size: clamp(0.7rem, 1.4vw, 0.95rem); white-space: nowrap;
+  max-width: 92%; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ---------- control deck ---------- */
+.deck { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr); gap: 16px; }
+@media (max-width: 820px) { .deck { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--deck); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.step { display: flex; align-items: center; gap: 10px; }
+.step i {
+  font-style: normal; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--magenta), var(--violet)); font-weight: 700; font-size: 0.85rem;
+}
+.step h2 { margin: 0; font-size: 1.05rem; }
+label.f { display: grid; gap: 6px; font-size: 0.82rem; color: var(--muted); }
+input[type="text"] {
+  width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--ink);
+  color: var(--text); font: inherit; font-size: 1rem;
+}
+input[type="text"]:focus-visible, button:focus-visible, .btn:focus-within { outline: 2px solid var(--gold); outline-offset: 2px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row input[type="text"] { flex: 1 1 180px; width: auto; min-width: 0; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative;
+  border: 1px solid var(--line); background: var(--deck-2); color: var(--text); font: inherit; font-weight: 600;
+  padding: 10px 14px; border-radius: 10px; transition: transform 0.08s, border-color 0.2s;
+}
+.btn:hover { border-color: var(--violet); }
+.btn:active { transform: scale(0.97); }
+.btn.hot { background: linear-gradient(135deg, var(--magenta), var(--violet)); border-color: transparent; }
+.btn.grow { flex: 1; }
+.btn input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.mine { display: flex; gap: 8px; flex-wrap: wrap; }
+.mine figure { margin: 0; position: relative; width: 58px; }
+.mine img { width: 58px; height: 58px; object-fit: cover; border-radius: 10px; display: block; border: 2px solid var(--gold); }
+.mine button {
+  position: absolute; top: -6px; inset-inline-end: -6px; width: 22px; height: 22px; border-radius: 50%; border: 0;
+  background: var(--ink); color: var(--text); cursor: pointer; font-size: 0.75rem; box-shadow: 0 0 0 1px var(--line);
+}
+.mine figcaption { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.note { color: var(--muted); font-size: 0.82rem; margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--ink); border: 1px solid var(--line); color: var(--text); border-radius: 999px; padding: 7px 13px;
+  cursor: pointer; font: inherit; font-size: 0.88rem; display: inline-flex; gap: 6px; align-items: center;
+}
+.chip canvas { width: 16px; height: 16px; }
+.chip:hover { border-color: var(--magenta); }
+.chip.on { border-color: var(--magenta); background: color-mix(in srgb, var(--magenta) 16%, var(--ink)); }
+.modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sub { font-size: 0.74rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 4px 0 0; }
+
+.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 820px) { .how { grid-template-columns: minmax(0, 1fr); } }
+.how div { border-top: 2px solid var(--line); padding-top: 10px; min-width: 0; }
+.how b { display: block; margin-bottom: 2px; }
+.how p { margin: 0; color: var(--muted); font-size: 0.86rem; }
+.toast {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  background: var(--deck-2); border: 1px solid var(--violet); padding: 9px 16px; border-radius: 10px; z-index: 20;
+  max-width: calc(100vw - 32px);
+}
+@media (prefers-reduced-motion: reduce) { .spot img, .spot b { animation: none; } }
+
+/* ---------- camera ---------- */
+.cam { position: fixed; inset: 0; z-index: 30; background: rgba(5, 4, 10, 0.92); display: grid; place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.cam-box { width: min(440px, 100%); display: grid; gap: 14px; }
+.cam-frame { position: relative; width: 100%; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #000; }
+.cam-frame video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-frame video.mirror { transform: scaleX(-1); }
+.cam-guide { position: absolute; inset: 14%; border: 3px dashed rgba(255, 255, 255, 0.5); border-radius: 50%; pointer-events: none; }
+.cam-count { position: absolute; inset: 0; display: grid; place-items: center; font: 400 7rem/1 var(--font-display); color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+.cam-err { margin: 0; color: #ffb0c8; text-align: center; }
+.cam-ctl { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.shutter { width: 76px; height: 76px; border-radius: 50%; border: 5px solid #fff; cursor: pointer; flex-shrink: 0;
+  background: radial-gradient(circle, var(--magenta) 0 58%, transparent 60%); }
+.shutter:disabled { opacity: 0.35; cursor: default; }
+.flash { position: fixed; inset: 0; background: #fff; z-index: 40; pointer-events: none; animation: flash 0.35s ease-out forwards; }
+@keyframes flash { from { opacity: 0.9; } to { opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1 data-t="title">Selfie Mosaic Wall</h1>
+      <p data-t="tagline">Every guest's selfie becomes one tile of a giant picture on the event screen.</p>
+    </div>
+    <span class="tag" data-t="demo">Live demo</span>
+    <button class="lang" id="langBtn" type="button">العربية</button>
+  </header>
+
+  <section class="stage" id="stage" aria-label="Event screen preview">
+    <canvas id="cv"></canvas>
+    <div class="count" id="count"></div>
+    <button class="fs" id="fsBtn" type="button" data-t="full">Full screen</button>
+    <div class="spot" id="spot" hidden><img id="spotImg" alt=""><b id="spotName"></b></div>
+    <div class="hint" id="hint" data-t="hint">Add your selfie below, then press a shape</div>
+  </section>
+
+  <div class="deck">
+    <section class="panel">
+      <div class="step"><i>1</i><h2 data-t="s1">Join the wall</h2></div>
+      <label class="f"><span data-t="nameLbl">Your name</span>
+        <input type="text" id="nameIn" maxlength="30" autocomplete="name" placeholder="Sara">
+      </label>
+      <div class="row">
+        <button class="btn hot grow" id="camBtn" type="button"><span data-t="selfie">Take a selfie</span></button>
+        <input type="file" id="camIn" accept="image/*" capture="user" hidden>
+        <label class="btn grow"><span data-t="upload">Upload a photo</span>
+          <input type="file" id="fileIn" accept="image/*">
+        </label>
+      </div>
+      <div class="mine" id="mine"></div>
+      <p class="note" data-t="privacy">Your photo stays in this browser. Nothing is uploaded or shared in this demo.</p>
+    </section>
+
+    <section class="panel">
+      <div class="step"><i>2</i><h2 data-t="s2">Make a shape</h2></div>
+      <div class="row">
+        <input type="text" id="textIn" maxlength="24" value="SARA" aria-label="Letter, name or number">
+        <button class="btn hot" id="formBtn" type="button" data-t="form">Form it</button>
+      </div>
+      <p class="sub" data-t="quick">Quick picks</p>
+      <div class="chips" id="chips"></div>
+      <p class="sub" data-t="other">Other looks</p>
+      <div class="modes">
+        <button class="btn" type="button" data-mode="wall" data-t="wall">Photo wall</button>
+        <button class="btn" type="button" data-mode="scatter" data-t="scatter">Scatter</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2 style="margin:0;font-size:1.05rem" data-t="howT">How it runs at your event</h2>
+    <div class="how">
+      <div><b data-t="h1">Guests scan a QR code</b><p data-t="h1p">They type their name and take a selfie on their own phone, straight from your registration or RSVP page.</p></div>
+      <div><b data-t="h2">You approve photos</b><p data-t="h2p">Each approved photo pops up on the big screen with the guest's name, then joins the wall.</p></div>
+      <div><b data-t="h3">One tap forms the picture</b><p data-t="h3p">From the admin panel you choose a letter, a name, a number, a shape or your logo, and every photo flies into place.</p></div>
+    </div>
+  </section>
+</div>
+<div class="cam" id="cam" hidden role="dialog" aria-modal="true" aria-label="Camera">
+  <div class="cam-box">
+    <div class="cam-frame">
+      <video id="camVideo" playsinline autoplay muted></video>
+      <div class="cam-guide" aria-hidden="true"></div>
+      <div class="cam-count" id="camCount" hidden>3</div>
+    </div>
+    <p class="cam-err" id="camErr" hidden></p>
+    <div class="cam-ctl">
+      <button class="btn" id="camCancel" type="button" data-t="cancel">Cancel</button>
+      <button class="shutter" id="camShoot" type="button" aria-label="Take photo"></button>
+      <button class="btn" id="camFlip" type="button" data-t="flip">Flip</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+/* Shape engine: turns text / preset shapes / uploaded images into a set of square
+ * tile positions ("slots") that photos fly into. Shared by the big screen and the
+ * admin preview so both always agree. No dependencies. */
+(function (global) {
+  'use strict';
+
+  // ---- preset shapes, drawn in a 100x100 box ---------------------------------
+  function poly(ctx, pts) {
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+    ctx.closePath();
+    ctx.fill();
+  }
+  function starPts(n, r1, r2, cx = 50, cy = 52) {
+    const pts = [];
+    for (let i = 0; i < n * 2; i++) {
+      const r = i % 2 ? r2 : r1;
+      const a = -Math.PI / 2 + (i * Math.PI) / n;
+      pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+    }
+    return pts;
+  }
+  function circle(ctx, x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function cut(ctx, fn) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    fn();
+    ctx.restore();
+  }
+
+  const PRESETS = {
+    heart: { label: 'Heart', draw(ctx) {
+      ctx.beginPath();
+      ctx.moveTo(50, 92);
+      ctx.bezierCurveTo(18, 68, 2, 50, 2, 30);
+      ctx.bezierCurveTo(2, 14, 14, 4, 28, 4);
+      ctx.bezierCurveTo(38, 4, 46, 10, 50, 19);
+      ctx.bezierCurveTo(54, 10, 62, 4, 72, 4);
+      ctx.bezierCurveTo(86, 4, 98, 14, 98, 30);
+      ctx.bezierCurveTo(98, 50, 82, 68, 50, 92);
+      ctx.fill();
+    } },
+    star: { label: 'Star', draw: (ctx) => poly(ctx, starPts(5, 50, 20, 50, 54)) },
+    circle: { label: 'Circle', draw: (ctx) => circle(ctx, 50, 50, 49) },
+    ring: { label: 'Ring', draw(ctx) { circle(ctx, 50, 50, 49); cut(ctx, () => circle(ctx, 50, 50, 30)); } },
+    crescent: { label: 'Crescent', draw(ctx) { circle(ctx, 46, 50, 46); cut(ctx, () => circle(ctx, 64, 42, 38)); } },
+    diamond: { label: 'Diamond', draw: (ctx) => poly(ctx, [[50, 1], [96, 50], [50, 99], [4, 50]]) },
+    hexagon: { label: 'Hexagon', draw: (ctx) => poly(ctx, [0, 1, 2, 3, 4, 5].map((i) => {
+      const a = (Math.PI / 3) * i; return [50 + 49 * Math.cos(a), 50 + 49 * Math.sin(a)];
+    })) },
+    triangle: { label: 'Triangle', draw: (ctx) => poly(ctx, [[50, 4], [98, 92], [2, 92]]) },
+    plus: { label: 'Plus', draw: (ctx) => poly(ctx, [[35, 2], [65, 2], [65, 35], [98, 35], [98, 65], [65, 65], [65, 98], [35, 98], [35, 65], [2, 65], [2, 35], [35, 35]]) },
+    smile: { label: 'Smiley', draw(ctx) {
+      circle(ctx, 50, 50, 49);
+      cut(ctx, () => {
+        circle(ctx, 34, 36, 8);
+        circle(ctx, 66, 36, 8);
+        ctx.beginPath();
+        ctx.lineWidth = 9;
+        ctx.lineCap = 'round';
+        ctx.arc(50, 52, 26, 0.15 * Math.PI, 0.85 * Math.PI);
+        ctx.stroke();
+      });
+    } },
+    bolt: { label: 'Lightning', draw: (ctx) => poly(ctx, [[60, 1], [14, 56], [44, 56], [36, 99], [86, 40], [55, 40]]) },
+    check: { label: 'Check', draw: (ctx) => poly(ctx, [[4, 54], [18, 40], [38, 60], [82, 14], [96, 28], [38, 86]]) },
+    house: { label: 'House', draw(ctx) {
+      poly(ctx, [[50, 4], [98, 46], [86, 46], [86, 96], [14, 96], [14, 46], [2, 46]]);
+      cut(ctx, () => ctx.fillRect(40, 64, 20, 32));
+    } },
+    ring2: { label: 'Wedding rings', draw(ctx) {
+      ctx.lineWidth = 10;
+      ctx.beginPath(); ctx.arc(36, 54, 28, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(64, 54, 28, 0, Math.PI * 2); ctx.stroke();
+      poly(ctx, [[36, 14], [30, 6], [42, 6]]);
+    } },
+  };
+
+  const FONTS = [
+    { id: 'Anton', css: '"Anton", Impact, sans-serif', weight: '400' },
+    { id: 'Archivo Black', css: '"Archivo Black", "Arial Black", sans-serif', weight: '400' },
+    { id: 'Lilita One', css: '"Lilita One", "Arial Rounded MT Bold", sans-serif', weight: '400' },
+    { id: 'Cairo', css: '"Cairo", Tahoma, sans-serif', weight: '900' }, // Arabic + Latin
+    { id: 'Tajawal', css: '"Tajawal", Tahoma, sans-serif', weight: '900' }, // Arabic + Latin
+    { id: 'Arial', css: 'Arial, Helvetica, sans-serif', weight: '900' },
+  ];
+  const GOOGLE_FONTS_URL =
+    'https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Cairo:wght@900&family=Lilita+One&family=Tajawal:wght@900&display=swap';
+
+  function fontFor(id) {
+    return FONTS.find((f) => f.id === id) || FONTS[0];
+  }
+
+  // ---- image loading for "image" shapes (cached) ------------------------------
+  const imgCache = new Map();
+  function loadImage(src) {
+    if (imgCache.has(src)) return imgCache.get(src);
+    const p = new Promise((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = rej;
+      im.src = src;
+    });
+    imgCache.set(src, p);
+    return p;
+  }
+
+  /**
+   * Render a shape into a mask canvas of size w x h (white = inside).
+   * Async because fonts / images may need loading.
+   */
+  async function renderMask(shape, w, h) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#fff';
+    const pad = Math.round(Math.min(w, h) * 0.06);
+    const bw = w - pad * 2;
+    const bh = h - pad * 2;
+    const type = shape && shape.type;
+
+    if (type === 'preset') {
+      const p = PRESETS[shape.preset] || PRESETS.heart;
+      const size = Math.min(bw, bh);
+      ctx.save();
+      ctx.translate((w - size) / 2, (h - size) / 2);
+      ctx.scale(size / 100, size / 100);
+      p.draw(ctx);
+      ctx.restore();
+    } else if (type === 'image' && shape.image) {
+      const im = await loadImage(shape.image);
+      const k = Math.min(bw / im.width, bh / im.height);
+      const iw = Math.max(1, Math.round(im.width * k));
+      const ih = Math.max(1, Math.round(im.height * k));
+      const t = document.createElement('canvas');
+      t.width = iw;
+      t.height = ih;
+      const tctx = t.getContext('2d');
+      tctx.drawImage(im, 0, 0, iw, ih);
+      const src = tctx.getImageData(0, 0, iw, ih);
+      const d = src.data;
+      let hasAlpha = false;
+      for (let i = 3; i < d.length; i += 4) if (d[i] < 240) { hasAlpha = true; break; }
+      const out = ctx.createImageData(iw, ih);
+      const o = out.data;
+      for (let i = 0; i < d.length; i += 4) {
+        let inside = hasAlpha
+          ? d[i + 3] > 127
+          : 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] < 128; // dark pixels = shape
+        if (shape.invert) inside = !inside;
+        o[i] = o[i + 1] = o[i + 2] = 255;
+        o[i + 3] = inside ? 255 : 0;
+      }
+      ctx.putImageData(out, Math.round((w - iw) / 2), Math.round((h - ih) / 2));
+    } else {
+      // text (default). Supports several lines separated by "\n" or "|".
+      const f = fontFor(shape && shape.font);
+      const lines = String((shape && shape.text) || ' ').split(/\n|\|/).map((s) => s.trim()).filter(Boolean);
+      if (!lines.length) lines.push(' ');
+      if (document.fonts && document.fonts.load) {
+        // never let a slow/offline font CDN block the show: fall back after 2.5s
+        const load = document.fonts.load(`${f.weight} 100px ${f.css.split(',')[0]}`, lines.join('')).catch(() => {});
+        await Promise.race([load, new Promise((r) => setTimeout(r, 2500))]);
+      }
+      const base = 200;
+      ctx.font = `${f.weight} ${base}px ${f.css}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      const metrics = lines.map((l) => ctx.measureText(l));
+      const asc = Math.max(...metrics.map((m) => m.actualBoundingBoxAscent || base * 0.75));
+      const desc = Math.max(...metrics.map((m) => m.actualBoundingBoxDescent || base * 0.1));
+      const lineH = asc + desc;
+      const gapH = base * 0.15;
+      const totalH = lineH * lines.length + gapH * (lines.length - 1);
+      const maxW = Math.max(...metrics.map((m) => (m.actualBoundingBoxLeft || 0) + (m.actualBoundingBoxRight || m.width) || m.width));
+      const k = Math.min(bw / maxW, bh / totalH);
+      ctx.font = `${f.weight} ${base * k}px ${f.css}`;
+      let y = (h - totalH * k) / 2 + asc * k;
+      for (let i = 0; i < lines.length; i++) {
+        const m = metrics[i];
+        // centre on the real ink box (handles fonts with uneven side bearings)
+        const off = ((m.actualBoundingBoxLeft || 0) - (m.actualBoundingBoxRight || 0)) / 2;
+        ctx.fillText(lines[i], w / 2 + off * k, y);
+        y += (lineH + gapH) * k;
+      }
+    }
+    return c;
+  }
+
+  /** Summed-area table of a mask (1 where alpha > 127) for O(1) coverage queries. */
+  function buildSAT(maskCanvas) {
+    const w = maskCanvas.width;
+    const h = maskCanvas.height;
+    const d = maskCanvas.getContext('2d').getImageData(0, 0, w, h).data;
+    const W = w + 1;
+    const sat = new Uint32Array(W * (h + 1));
+    for (let y = 1; y <= h; y++) {
+      let row = 0;
+      for (let x = 1; x <= w; x++) {
+        row += d[((y - 1) * w + (x - 1)) * 4 + 3] > 127 ? 1 : 0;
+        sat[y * W + x] = sat[(y - 1) * W + x] + row;
+      }
+    }
+    return { sat, w, h };
+  }
+
+  function cellsAt(S, cell, threshold, collect) {
+    const { sat, w, h } = S;
+    const W = w + 1;
+    const cols = Math.floor(w / cell);
+    const rows = Math.floor(h / cell);
+    const ox = (w - cols * cell) / 2;
+    const oy = (h - rows * cell) / 2;
+    const out = collect ? [] : null;
+    let count = 0;
+    for (let r = 0; r < rows; r++) {
+      const y0 = Math.round(oy + r * cell);
+      const y1 = Math.min(h, Math.round(oy + (r + 1) * cell));
+      for (let c = 0; c < cols; c++) {
+        const x0 = Math.round(ox + c * cell);
+        const x1 = Math.min(w, Math.round(ox + (c + 1) * cell));
+        const area = (x1 - x0) * (y1 - y0);
+        if (area <= 0) continue;
+        const sum = sat[y1 * W + x1] - sat[y0 * W + x1] - sat[y1 * W + x0] + sat[y0 * W + x0];
+        if (sum / area >= threshold) {
+          count++;
+          if (out) out.push({ x: ox + (c + 0.5) * cell, y: oy + (r + 0.5) * cell, r, c });
+        }
+      }
+    }
+    return collect ? out : count;
+  }
+
+  /**
+   * Compute tile slots for a shape.
+   * @param shape   display.shape
+   * @param W,H     drawing area in CSS px
+   * @param target  minimum number of tiles wanted
+   * @returns {slots:[{x,y}], size}  (centre points in CSS px, tile size in CSS px)
+   */
+  async function computeShapeSlots(shape, W, H, target) {
+    const k = Math.min(1, 900 / Math.max(W, H)); // work at reduced resolution for speed
+    const mw = Math.max(20, Math.round(W * k));
+    const mh = Math.max(20, Math.round(H * k));
+    const mask = await renderMask(shape, mw, mh);
+    const S = buildSAT(mask);
+    const threshold = 0.5;
+    target = Math.max(1, Math.round(target));
+
+    // Largest cell size that still yields >= target tiles (binary search).
+    let lo = 1.5;
+    let hi = Math.min(mw, mh);
+    if (cellsAt(S, lo, threshold) < target) hi = lo; // can't reach target; use the finest grid
+    for (let i = 0; i < 28 && hi - lo > 0.05; i++) {
+      const mid = (lo + hi) / 2;
+      if (cellsAt(S, mid, threshold) >= target) lo = mid;
+      else hi = mid;
+    }
+    const cell = lo;
+    const slots = cellsAt(S, cell, threshold, true).map((s) => ({ x: s.x / k, y: s.y / k, r: s.r, c: s.c }));
+    return { slots, size: cell / k, mask };
+  }
+
+  // ---- other layouts ---------------------------------------------------------
+  /** Best square grid for n tiles inside W x H. */
+  function gridSlots(n, W, H, maxSize) {
+    if (n <= 0) return { slots: [], size: 0 };
+    let best = { size: 0, cols: 1, rows: 1 };
+    for (let cols = 1; cols <= n; cols++) {
+      const rows = Math.ceil(n / cols);
+      const size = Math.min(W / cols, H / rows);
+      if (size > best.size) best = { size, cols, rows };
+    }
+    const size = Math.min(best.size, maxSize || Infinity);
+    const { cols, rows } = best;
+    const ox = (W - cols * size) / 2;
+    const oy = (H - rows * size) / 2;
+    const slots = [];
+    for (let i = 0; i < n; i++) {
+      const r = Math.floor(i / cols);
+      const c = i % cols;
+      // centre an incomplete last row
+      const inRow = r === rows - 1 ? n - r * cols : cols;
+      const rowOx = ox + ((cols - inRow) * size) / 2;
+      slots.push({ x: rowOx + (c + 0.5) * size, y: oy + (r + 0.5) * size });
+    }
+    return { slots, size };
+  }
+
+  // Deterministic PRNG so every screen showing the same event looks identical.
+  function rng(seed) {
+    let a = (seed >>> 0) || 1;
+    return function () {
+      a |= 0; a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffle(arr, rand) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  global.ShapeEngine = {
+    PRESETS, FONTS, GOOGLE_FONTS_URL, fontFor,
+    renderMask, computeShapeSlots, gridSlots, rng, shuffle,
+  };
+})(window);
+</script>
+<script>
+(function () {
+  'use strict';
+  const SE = window.ShapeEngine;
+  const $ = (id) => document.getElementById(id);
+
+  // ------------------------------------------------------------ language
+  const T = {
+    en: {
+      title: 'Selfie Mosaic Wall', tagline: "Every guest's selfie becomes one tile of a giant picture on the event screen.",
+      demo: 'Live demo', full: 'Full screen', hint: 'Add your selfie below, then press a shape',
+      s1: 'Join the wall', nameLbl: 'Your name', selfie: 'Take a selfie', upload: 'Upload a photo',
+      privacy: 'Your photo stays in this browser. Nothing is uploaded or shared in this demo.',
+      s2: 'Make a shape', form: 'Form it', quick: 'Quick picks', other: 'Other looks', wall: 'Photo wall', scatter: 'Scatter',
+      howT: 'How it runs at your event',
+      h1: 'Guests scan a QR code', h1p: 'They type their name and take a selfie on their own phone, straight from your registration or RSVP page.',
+      h2: 'You approve photos', h2p: "Each approved photo pops up on the big screen with the guest's name, then joins the wall.",
+      h3: 'One tap forms the picture', h3p: 'From the admin panel you choose a letter, a name, a number, a shape or your logo, and every photo flies into place.',
+      guests: 'guests', you: 'Your photos are outlined in gold', added: 'You joined the wall!', typeSomething: 'Type a letter, name or number first',
+      badImage: "That file couldn't be read as a photo. Try a JPG or PNG.", lang: 'العربية', remove: 'Remove',
+      cancel: 'Cancel', flip: 'Flip',
+      camDenied: 'Camera access was blocked. Allow the camera for this site in your browser settings, or use Upload a photo.',
+      camNone: 'No camera found on this device. Use Upload a photo instead.',
+      heart: 'Heart', star: 'Star', rings: 'Rings', crescent: 'Crescent', smile: 'Smiley',
+    },
+    ar: {
+      title: 'جدار صور السيلفي', tagline: 'صورة كل ضيف تصبح جزءاً من صورة عملاقة على شاشة الحفل.',
+      demo: 'تجربة مباشرة', full: 'ملء الشاشة', hint: 'أضف صورتك بالأسفل ثم اختر شكلاً',
+      s1: 'انضم إلى الجدار', nameLbl: 'اسمك', selfie: 'التقط سيلفي', upload: 'ارفع صورة',
+      privacy: 'صورتك تبقى في متصفحك فقط. لا يتم رفع أو مشاركة أي شيء في هذه التجربة.',
+      s2: 'كوّن شكلاً', form: 'كوّن', quick: 'اختيارات سريعة', other: 'أشكال أخرى', wall: 'جدار الصور', scatter: 'مبعثرة',
+      howT: 'كيف يعمل في مناسبتك',
+      h1: 'الضيوف يمسحون رمز QR', h1p: 'يكتبون أسماءهم ويلتقطون سيلفي من جوالاتهم مباشرة من صفحة التسجيل أو الدعوة.',
+      h2: 'أنت توافق على الصور', h2p: 'كل صورة توافق عليها تظهر كبيرة على الشاشة مع اسم الضيف ثم تنضم إلى الجدار.',
+      h3: 'بضغطة واحدة تتكون الصورة', h3p: 'من لوحة التحكم تختار حرفاً أو اسماً أو رقماً أو شكلاً أو شعارك، فتطير كل الصور إلى مكانها.',
+      guests: 'ضيف', you: 'صورك محاطة بإطار ذهبي', added: 'انضممت إلى الجدار!', typeSomething: 'اكتب حرفاً أو اسماً أو رقماً أولاً',
+      badImage: 'تعذرت قراءة الملف كصورة. جرّب JPG أو PNG.', lang: 'English', remove: 'حذف',
+      cancel: 'إلغاء', flip: 'تبديل',
+      camDenied: 'تم منع الوصول إلى الكاميرا. اسمح بالكاميرا لهذا الموقع من إعدادات المتصفح أو استخدم رفع صورة.',
+      camNone: 'لا توجد كاميرا في هذا الجهاز. استخدم رفع صورة.',
+      heart: 'قلب', star: 'نجمة', rings: 'خواتم', crescent: 'هلال', smile: 'وجه مبتسم',
+    },
+  };
+  let lang = 'en';
+  try { if (localStorage.getItem('smw:lang') === 'ar') lang = 'ar'; } catch (_) {}
+  const t = (k) => T[lang][k] || T.en[k] || k;
+
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = t(el.dataset.t); });
+    $('langBtn').textContent = t('lang');
+    renderChips();
+    renderMine();
+    updateCount();
+  }
+  $('langBtn').onclick = () => {
+    lang = lang === 'ar' ? 'en' : 'ar';
+    try { localStorage.setItem('smw:lang', lang); } catch (_) {}
+    applyLang();
+  };
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.hidden = false;
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => { el.hidden = true; }, 2400);
+  }
+
+  // ------------------------------------------------------------ canvas
+  const stage = $('stage');
+  const canvas = $('cv');
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, DPR = 1;
+
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, r.width);
+    H = Math.max(1, r.height);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    frame.dirty = true;
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  function roundedThumb(src, sw, sh) {
+    const size = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = size;
+    const g = c.getContext('2d');
+    const side = Math.min(sw, sh);
+    roundRect(g, 0, 0, size, size, size * 0.1);
+    g.clip();
+    g.drawImage(src, (sw - side) / 2, (sh - side) / 2, side, side, 0, 0, size, size);
+    return c;
+  }
+
+  // Sample guests: illustrated avatars (no real people)
+  function avatar(i) {
+    const s = 256;
+    const c = document.createElement('canvas');
+    c.width = c.height = s;
+    const g = c.getContext('2d');
+    const r = SE.rng(i * 7919 + 13);
+    const hue = Math.floor(r() * 360);
+    const bg = g.createLinearGradient(0, 0, s, s);
+    bg.addColorStop(0, `hsl(${hue},70%,58%)`);
+    bg.addColorStop(1, `hsl(${(hue + 40) % 360},75%,42%)`);
+    g.fillStyle = bg;
+    g.fillRect(0, 0, s, s);
+    const skin = ['#f2d0b5', '#e0ac85', '#c68a62', '#9c6644', '#6f4630'][Math.floor(r() * 5)];
+    const hair = ['#1d1310', '#3b2418', '#6b4325', '#b07a3c', '#2a2a2a', '#7a1f3d'][Math.floor(r() * 6)];
+    const shirt = `hsl(${(hue + 180) % 360},55%,${30 + r() * 30}%)`;
+    // shoulders
+    g.fillStyle = shirt;
+    g.beginPath(); g.ellipse(s / 2, s * 1.02, s * 0.42, s * 0.3, 0, 0, Math.PI * 2); g.fill();
+    // neck + head
+    g.fillStyle = skin;
+    g.fillRect(s * 0.44, s * 0.55, s * 0.12, s * 0.16);
+    g.beginPath(); g.ellipse(s / 2, s * 0.45, s * 0.19, s * 0.22, 0, 0, Math.PI * 2); g.fill();
+    // hair (several styles) or head scarf
+    g.fillStyle = hair;
+    const style = Math.floor(r() * 4);
+    if (style === 0) { g.beginPath(); g.ellipse(s / 2, s * 0.36, s * 0.21, s * 0.15, 0, Math.PI, 0); g.fill(); }
+    else if (style === 1) { g.beginPath(); g.ellipse(s / 2, s * 0.42, s * 0.24, s * 0.28, 0, Math.PI * 1.02, Math.PI * 1.98); g.fill();
+      g.fillRect(s * 0.27, s * 0.38, s * 0.07, s * 0.3); g.fillRect(s * 0.66, s * 0.38, s * 0.07, s * 0.3); }
+    else if (style === 2) { g.fillStyle = `hsl(${(hue + 200) % 360},45%,${25 + r() * 40}%)`;
+      g.beginPath(); g.ellipse(s / 2, s * 0.47, s * 0.27, s * 0.32, 0, Math.PI * 0.92, Math.PI * 2.08); g.fill();
+      g.fillStyle = skin; g.beginPath(); g.ellipse(s / 2, s * 0.48, s * 0.16, s * 0.18, 0, 0, Math.PI * 2); g.fill(); }
+    else { g.beginPath(); g.ellipse(s / 2, s * 0.33, s * 0.18, s * 0.09, 0, Math.PI, 0); g.fill(); }
+    // face
+    g.fillStyle = '#1b1220';
+    g.beginPath(); g.arc(s * 0.43, s * 0.46, s * 0.018, 0, Math.PI * 2); g.arc(s * 0.57, s * 0.46, s * 0.018, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = '#1b1220'; g.lineWidth = s * 0.014; g.lineCap = 'round';
+    g.beginPath(); g.arc(s / 2, s * 0.52, s * 0.06, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+    return roundedThumb(c, s, s);
+  }
+
+  const SAMPLE_NAMES = ['Omar', 'Lina', 'Yousef', 'Maya', 'Khalid', 'Nora', 'Adam', 'Huda', 'Sami', 'Rana', 'Faisal', 'Dana'];
+  const photos = []; // {id, name, thumb, mine, src}
+  for (let i = 0; i < 48; i++) photos.push({ id: 's' + i, name: SAMPLE_NAMES[i % SAMPLE_NAMES.length], thumb: avatar(i), mine: false });
+
+  // ------------------------------------------------------------ display + layout
+  let display = { mode: 'wall', shape: { type: 'text', text: 'SARA', font: 'Anton' }, detail: 260, gap: 2, repeat: true, layoutRev: 1 };
+  const sprites = new Map();
+  const spawnFrom = new Map();
+  let animUntil = 0;
+  let layoutSeq = 0;
+  const ease = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  const rand = Math.random;
+
+  async function computeTargets() {
+    const list = photos;
+    const n = list.length;
+    const d = display;
+    const seed = Math.floor(d.layoutRev % 2147483647) || 1;
+    const out = [];
+    if (d.mode === 'shape') {
+      const want = Math.max(n, Math.round(d.detail * Math.min(1, Math.max(0.45, W / 1100))));
+      const { slots, size } = await SE.computeShapeSlots(d.shape, W, H, want);
+      const order = SE.shuffle(slots, SE.rng(seed));
+      const s = Math.max(2, size - (size > 12 ? d.gap : 0.5));
+      order.forEach((slot, i) => {
+        const p = list[i % n];
+        out.push({ key: `${p.id}#${Math.floor(i / n)}`, id: p.id, x: slot.x, y: slot.y, s, rot: 0 });
+      });
+    } else if (d.mode === 'scatter') {
+      const r = SE.rng(seed);
+      const s = Math.max(28, Math.min(H * 0.3, Math.sqrt((W * H) / Math.max(n, 1)) * 0.85));
+      list.forEach((p) => out.push({ key: `${p.id}#0`, id: p.id, frame: true,
+        x: s / 2 + r() * (W - s), y: s / 2 + r() * (H - s), s, rot: (r() - 0.5) * 0.7 }));
+    } else {
+      const { slots, size } = SE.gridSlots(n, W * 0.95, H * 0.88, H * 0.42);
+      const gap = Math.max(2, size * 0.06);
+      slots.forEach((slot, i) => out.push({ key: `${list[i].id}#0`, id: list[i].id, x: slot.x + W * 0.025, y: slot.y + H * 0.06, s: size - gap, rot: 0 }));
+    }
+    return out;
+  }
+
+  function stateAt(sp, now) {
+    const p = sp.dur ? Math.max(0, Math.min(1, (now - sp.t0) / sp.dur)) : 1;
+    const e = ease(p);
+    const a = sp.from, b = sp.to, c = sp.ctrl, u = 1 - e;
+    return {
+      x: u * u * a.x + 2 * u * e * c.x + e * e * b.x,
+      y: u * u * a.y + 2 * u * e * c.y + e * e * b.y,
+      s: a.s + (b.s - a.s) * e,
+      rot: a.rot + (b.rot - a.rot) * e,
+      alpha: a.alpha + (b.alpha - a.alpha) * Math.min(1, e * 2.5),
+      frame: b.frame ? e : a.frame ? 1 - e : 0,
+      done: p >= 1,
+    };
+  }
+
+  function applyTargets(targets, style) {
+    const now = performance.now();
+    const fly = style === 'fly';
+    const seen = new Set();
+    const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    targets.forEach((tg) => {
+      seen.add(tg.key);
+      let sp = sprites.get(tg.key);
+      const delay = reduced ? 0 : fly ? rand() * Math.min(1400, 400 + targets.length * 2) : rand() * 220;
+      const dur = reduced ? 300 : fly ? 1400 + rand() * 900 : 850;
+      let from;
+      if (sp) {
+        const cur = stateAt(sp, now);
+        from = { x: cur.x, y: cur.y, s: cur.s, rot: cur.rot, alpha: cur.alpha, frame: cur.frame > 0.5 };
+      } else if (spawnFrom.has(tg.id) && tg.key.endsWith('#0')) {
+        from = Object.assign({ rot: 0, alpha: 1 }, spawnFrom.get(tg.id));
+        spawnFrom.delete(tg.id);
+      } else {
+        const ang = rand() * Math.PI * 2;
+        const rr = Math.hypot(W, H) * (0.6 + rand() * 0.3);
+        from = { x: W / 2 + Math.cos(ang) * rr, y: H / 2 + Math.sin(ang) * rr, s: tg.s * (0.6 + rand() * 1.6), rot: (rand() - 0.5) * 3, alpha: 1 };
+      }
+      if (!sp) { sp = { key: tg.key, id: tg.id }; sprites.set(tg.key, sp); }
+      sp.dying = false;
+      sp.from = from;
+      sp.to = { x: tg.x, y: tg.y, s: tg.s, rot: tg.rot || 0, alpha: 1, frame: !!tg.frame };
+      const dx = tg.x - from.x, dy = tg.y - from.y, bend = fly ? (rand() - 0.5) * 0.6 : 0;
+      sp.ctrl = { x: (from.x + tg.x) / 2 - dy * bend, y: (from.y + tg.y) / 2 + dx * bend };
+      sp.t0 = now + delay;
+      sp.dur = dur;
+      animUntil = Math.max(animUntil, sp.t0 + dur);
+    });
+    sprites.forEach((sp, key) => {
+      if (seen.has(key) || sp.dying) return;
+      const cur = stateAt(sp, now);
+      sp.dying = true;
+      sp.from = { x: cur.x, y: cur.y, s: cur.s, rot: cur.rot, alpha: cur.alpha };
+      sp.to = { x: cur.x, y: cur.y, s: 0, rot: cur.rot, alpha: 0 };
+      sp.ctrl = { x: cur.x, y: cur.y };
+      sp.t0 = now;
+      sp.dur = 450;
+      animUntil = Math.max(animUntil, now + 450);
+    });
+  }
+
+  async function relayout(style) {
+    if (!W) return;
+    const seq = ++layoutSeq;
+    const targets = await computeTargets();
+    if (seq !== layoutSeq) return;
+    applyTargets(targets, style);
+  }
+
+  const byId = () => new Map(photos.map((p) => [p.id, p]));
+  let lookup = byId();
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (now > animUntil + 60 && !frame.dirty) return;
+    frame.dirty = false;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const mineOnTop = [];
+    sprites.forEach((sp, key) => {
+      const st = stateAt(sp, now);
+      if (sp.dying && st.done) { sprites.delete(key); return; }
+      if (st.s < 0.5 || st.alpha <= 0.01) return;
+      const p = lookup.get(sp.id);
+      if (p && p.mine) { mineOnTop.push([p, st]); return; }
+      draw(p, st, false);
+    });
+    mineOnTop.forEach(([p, st]) => draw(p, st, true));
+  }
+  function draw(p, st, mine) {
+    const half = st.s / 2;
+    ctx.save();
+    ctx.globalAlpha = st.alpha;
+    ctx.translate(st.x, st.y);
+    if (st.rot) ctx.rotate(st.rot);
+    if (st.frame > 0.01) {
+      const b = st.s * 0.06 * st.frame;
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = 'rgba(0,0,0,.45)';
+      ctx.shadowBlur = 10 * st.frame;
+      ctx.fillRect(-half - b, -half - b, st.s + b * 2, st.s + b * 4);
+      ctx.shadowBlur = 0;
+    }
+    if (p) ctx.drawImage(p.thumb, -half, -half, st.s, st.s);
+    if (mine && st.s > 9) {
+      ctx.strokeStyle = '#ffc65c';
+      ctx.lineWidth = Math.max(1.5, st.s * 0.06);
+      roundRect(ctx, -half, -half, st.s, st.s, st.s * 0.1);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function setDisplay(patch) {
+    display = Object.assign({}, display, patch, { layoutRev: Date.now() });
+    document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('hot', b.dataset.mode === display.mode));
+    renderChips();
+    relayout('fly');
+  }
+
+  function updateCount() {
+    $('count').textContent = `${photos.length} ${t('guests')}`;
+  }
+
+  // ------------------------------------------------------------ your photos
+  function storeMine() {
+    try {
+      localStorage.setItem('smw:mine', JSON.stringify(photos.filter((p) => p.mine).map((p) => ({ id: p.id, name: p.name, src: p.src }))));
+    } catch (_) {}
+  }
+
+  function renderMine() {
+    const mine = photos.filter((p) => p.mine);
+    $('mine').innerHTML = '';
+    mine.forEach((p) => {
+      const f = document.createElement('figure');
+      const img = document.createElement('img');
+      img.src = p.src;
+      img.alt = p.name;
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.textContent = '✕';
+      x.title = t('remove');
+      x.setAttribute('aria-label', t('remove') + ' ' + p.name);
+      x.onclick = () => {
+        const i = photos.indexOf(p);
+        if (i >= 0) photos.splice(i, 1);
+        lookup = byId();
+        storeMine(); renderMine(); updateCount(); relayout('soft');
+      };
+      const cap = document.createElement('figcaption');
+      cap.textContent = p.name;
+      f.append(img, x, cap);
+      $('mine').appendChild(f);
+    });
+    $('hint').hidden = mine.length > 0;
+  }
+
+  function addMine(src, name, animate) {
+    const img = new Image();
+    img.onload = () => {
+      // square JPEG crop kept for the list and for reloads
+      const c = document.createElement('canvas');
+      c.width = c.height = 320;
+      const side = Math.min(img.naturalWidth, img.naturalHeight);
+      c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 320, 320);
+      const square = c.toDataURL('image/jpeg', 0.85);
+      const p = { id: 'm' + Date.now().toString(36) + Math.floor(rand() * 1e4), name: name || '', thumb: roundedThumb(c, 320, 320), mine: true, src: square };
+      if (!animate) { photos.push(p); lookup = byId(); return; }
+      spotlight(p);
+    };
+    img.onerror = () => { if (animate) toast(t('badImage')); };
+    img.src = src;
+  }
+
+  function spotlight(p) {
+    const spot = $('spot');
+    $('spotImg').src = p.src;
+    $('spotName').textContent = p.name;
+    spot.hidden = false;
+    $('hint').hidden = true;
+    $('spotImg').style.animation = 'none'; void spot.offsetWidth; $('spotImg').style.animation = '';
+    setTimeout(() => {
+      const ir = $('spotImg').getBoundingClientRect();
+      const sr = stage.getBoundingClientRect();
+      spawnFrom.set(p.id, { x: ir.left - sr.left + ir.width / 2, y: ir.top - sr.top + ir.height / 2, s: ir.width });
+      spot.hidden = true;
+      photos.push(p);
+      lookup = byId();
+      storeMine(); renderMine(); updateCount();
+      relayout('soft');
+      toast(t('added') + ' ' + t('you') + '.');
+    }, 2600);
+  }
+
+  function onFile(e) {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    const name = $('nameIn').value.trim();
+    try { localStorage.setItem('smw:name', name); } catch (_) {}
+    const u = URL.createObjectURL(f);
+    addMine(u, name, true);
+    if (name && !$('textIn').dataset.touched) $('textIn').value = name.toUpperCase().slice(0, 24);
+    renderChips();
+  }
+  $('camIn').addEventListener('change', onFile);
+
+  // ------------------------------------------------------------ live camera (needs https, which Vercel gives)
+  let stream = null;
+  let facing = 'user';
+  const video = $('camVideo');
+  function stopCam() { if (stream) stream.getTracks().forEach((tr) => tr.stop()); stream = null; video.srcObject = null; }
+  function closeCam() { stopCam(); $('cam').hidden = true; }
+  async function openCam() {
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $('camIn').click(); // fall back to the phone's own camera app
+      return;
+    }
+    $('cam').hidden = false;
+    $('camErr').hidden = true;
+    $('camShoot').disabled = true;
+    stopCam();
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
+      video.srcObject = stream;
+      video.classList.toggle('mirror', facing === 'user');
+      await video.play().catch(() => {});
+      $('camShoot').disabled = false;
+    } catch (err) {
+      $('camErr').textContent = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError') ? t('camDenied') : t('camNone');
+      $('camErr').hidden = false;
+    }
+  }
+  $('camBtn').onclick = openCam;
+  $('camCancel').onclick = closeCam;
+  $('camFlip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; openCam(); };
+  $('cam').addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCam(); });
+  $('camShoot').onclick = async () => {
+    if (!stream || !video.videoWidth) return;
+    $('camShoot').disabled = true;
+    const cd = $('camCount');
+    cd.hidden = false;
+    for (let i = 3; i > 0; i--) { cd.textContent = i; await new Promise((r) => setTimeout(r, 700)); }
+    cd.hidden = true;
+    const fl = document.createElement('div'); fl.className = 'flash'; document.body.appendChild(fl); setTimeout(() => fl.remove(), 400);
+    const c = document.createElement('canvas');
+    c.width = c.height = 640;
+    const g = c.getContext('2d');
+    const vw = video.videoWidth, vh = video.videoHeight, side = Math.min(vw, vh);
+    if (facing === 'user') { g.translate(640, 0); g.scale(-1, 1); }
+    g.drawImage(video, (vw - side) / 2, (vh - side) / 2, side, side, 0, 0, 640, 640);
+    const shot = c.toDataURL('image/jpeg', 0.88);
+    closeCam();
+    const name = $('nameIn').value.trim();
+    try { localStorage.setItem('smw:name', name); } catch (_) {}
+    if (name && !$('textIn').dataset.touched) $('textIn').value = name.toUpperCase().slice(0, 24);
+    addMine(shot, name, true);
+    renderChips();
+  };
+  $('fileIn').addEventListener('change', onFile);
+
+  // ------------------------------------------------------------ shape controls
+  const isArabic = (s) => /[؀-ۿ]/.test(s);
+  function textShape(text) {
+    return { type: 'text', text, font: isArabic(text) ? 'Cairo' : 'Anton' };
+  }
+  function formText(text) {
+    text = String(text || '').trim();
+    if (!text) return toast(t('typeSomething'));
+    setDisplay({ mode: 'shape', shape: textShape(text) });
+  }
+  $('formBtn').onclick = () => formText($('textIn').value);
+  $('textIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') formText($('textIn').value); });
+  $('textIn').addEventListener('input', () => { $('textIn').dataset.touched = '1'; });
+
+  function chipList() {
+    const nm = ($('nameIn').value.trim() || 'SARA').toUpperCase().slice(0, 14);
+    return [
+      { label: 'A', shape: textShape('A') },
+      { label: nm, shape: textShape(nm) },
+      { label: '2026', shape: textShape('2026') },
+      { label: 'أهلاً', shape: textShape('أهلاً') },
+      { label: 'S ♥ A', shape: textShape('S♥A') },
+      { label: t('heart'), shape: { type: 'preset', preset: 'heart' }, icon: 'heart' },
+      { label: t('star'), shape: { type: 'preset', preset: 'star' }, icon: 'star' },
+      { label: t('rings'), shape: { type: 'preset', preset: 'ring2' }, icon: 'ring2' },
+      { label: t('crescent'), shape: { type: 'preset', preset: 'crescent' }, icon: 'crescent' },
+      { label: t('smile'), shape: { type: 'preset', preset: 'smile' }, icon: 'smile' },
+    ];
+  }
+  function sameShape(a, b) {
+    return display.mode === 'shape' && a.type === b.type && (a.type === 'preset' ? a.preset === b.preset : a.text === b.text);
+  }
+  function renderChips() {
+    const box = $('chips');
+    box.innerHTML = '';
+    chipList().forEach((c) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip' + (sameShape(c.shape, display.shape) ? ' on' : '');
+      if (c.icon) {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = 32;
+        SE.renderMask({ type: 'preset', preset: c.icon }, 32, 32).then((m) => {
+          const g = cv.getContext('2d');
+          g.drawImage(m, 0, 0);
+          g.globalCompositeOperation = 'source-in';
+          g.fillStyle = '#ff4f9a';
+          g.fillRect(0, 0, 32, 32);
+        });
+        b.appendChild(cv);
+      }
+      b.appendChild(document.createTextNode(c.label));
+      b.onclick = () => {
+        if (c.shape.type === 'text') $('textIn').value = c.shape.text;
+        setDisplay({ mode: 'shape', shape: c.shape });
+      };
+      box.appendChild(b);
+    });
+  }
+  $('nameIn').addEventListener('input', () => renderChips());
+  document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => setDisplay({ mode: b.dataset.mode })));
+
+  $('fsBtn').onclick = () => {
+    if (document.fullscreenElement) { document.exitFullscreen && document.exitFullscreen().catch(() => {}); return; }
+    if (stage.requestFullscreen) stage.requestFullscreen().catch(() => {});
+  };
+
+  // ------------------------------------------------------------ start
+  try { $('nameIn').value = localStorage.getItem('smw:name') || ''; } catch (_) {}
+  try {
+    const saved = JSON.parse(localStorage.getItem('smw:mine') || '[]');
+    if (Array.isArray(saved)) saved.slice(0, 12).forEach((s) => s && s.src && addMine(s.src, s.name, false));
+  } catch (_) {}
+
+  let resizeTimer;
+  new ResizeObserver(() => {
+    resize();
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => relayout('soft'), 120);
+  }).observe(stage);
+
+  applyLang();
+  resize();
+  requestAnimationFrame(frame);
+  // Open on a finished picture so the first view already shows the idea, then let guests replay it.
+  setTimeout(() => {
+    lookup = byId();
+    renderMine(); updateCount();
+    setDisplay({ mode: 'shape', shape: { type: 'preset', preset: 'heart' } });
+  }, 150);
+})();
+</script>
+</body>
+</html>

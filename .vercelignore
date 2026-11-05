@@ -1,0 +1,7 @@
+# Vercel only hosts the static demo (demo/index.html).
+# The full system (server.js) needs a server that stays on: see README "Hosting".
+server.js
+src
+examples
+test
+public

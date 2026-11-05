@@ -149,6 +149,17 @@ Admin endpoints need the header `x-admin-key` (or `x-api-key`).
 
 Realtime events are on the Socket.IO namespace `/mosaic`. Emit `join {event, role: 'screen' | 'admin', key}`. You then receive `photo:add`, `photo:remove`, `photo:upsert` (admin) and `display`.
 
+## Hosting
+
+| What | Where it works |
+|---|---|
+| **Demo page** (`demo/index.html`): one browser, live camera, sample guests, shapes | **Vercel** (or any static host). `vercel.json` already points Vercel at `demo/` |
+| **Full system** (`server.js`): guest phones → admin → big screen | A host that keeps a Node server running with a disk: a VPS, Render, Railway, Fly.io, or inside your RSVP server |
+
+Vercel cannot run the full system. It runs code as short-lived functions with a read-only disk, so `server.js` can't keep live connections to the big screen or save photos there. Deploying the full system to Vercel gives a `500 FUNCTION_INVOCATION_FAILED` error.
+
+The camera only opens over **https** (or `localhost`). Vercel, Render and Railway all give you https automatically.
+
 ## Storage
 
 Photos are saved as files in `data/uploads/`, and everything else goes in `data/db.json`. No database is needed. To store data in your system's own database instead, replace `src/store.js` with an implementation that has the same methods and pass it in with `createPhotoMosaic({ store })`.
@@ -163,5 +174,6 @@ public/capture.html  guest page          public/js/capture.js
 public/screen.html   big screen (canvas) public/js/screen.js
 public/admin.html    admin panel         public/js/admin.js
 public/js/shapes.js  text/shape/logo → tile positions (shared by screen + admin preview)
+demo/index.html      standalone demo for Vercel / static hosting (live camera, no server)
 test/                API tests (npm test)
 ```
